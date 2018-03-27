@@ -1,25 +1,36 @@
-﻿using UnityEditorInternal;
+﻿/// Date	: 27/03/2018
+/// Company	: Fantastic, yes
+/// Author	: Maximilian Rötzer
+/// License	: This code is licensed under MIT license
+
+using UnityEditorInternal;
 using UnityEditor;
 using UnityEngine;
 
-[CustomEditor (typeof (TextureArrayData))]
-public class TextureArrayEditor : Editor
+[CustomEditor (typeof (Texture2DArrayData))]
+public class Texture2DArrayEditor : Editor
 {
+	#region Fields
 	private bool m_isModified;
 	private ReorderableList m_list;
-	private TextureArrayData m_arrayData;
-	private readonly GUIContent [] m_textureState = new GUIContent [4]
+	private Texture2DArrayData m_arrayData;
+
+	private readonly GUIContent [] m_texture2DState = new GUIContent [4]
 	{
 		new GUIContent ("✓", "Ok"),
 		new GUIContent ("✘", "Texture size does not match!"),
 		new GUIContent ("✘", "Texture format is wrong!"),
 		new GUIContent ("✘", "Mip map count is wrong!"),
 	};
+	#endregion
 
+	/// <summary>
+	/// Setup reorderable list.
+	/// </summary>
 	private void OnEnable ()
 	{
 		SerializedProperty serializedProperty = serializedObject.FindProperty ("m_textures");
-		m_arrayData = (TextureArrayData) target;
+		m_arrayData = (Texture2DArrayData) target;
 
 		m_list = new ReorderableList (serializedObject, serializedProperty, true, true, true, true)
 		{
@@ -38,7 +49,7 @@ public class TextureArrayEditor : Editor
 				EditorGUI.BeginChangeCheck ();
 				EditorGUI.PropertyField (new Rect (rect.x, rect.y + 2, 36, 16), property, GUIContent.none);
 				EditorGUI.LabelField (new Rect (rect.x + 40, rect.y + 2, rect.width - 60, 16), new GUIContent (texture.name));
-				EditorGUI.LabelField (new Rect (rect.width, rect.y + 2, 20, 16), m_textureState [state]);
+				EditorGUI.LabelField (new Rect (rect.width, rect.y + 2, 20, 16), m_texture2DState [state]);
 
 				if (EditorGUI.EndChangeCheck ())
 				{
@@ -66,6 +77,9 @@ public class TextureArrayEditor : Editor
 		};
 	}
 
+	/// <summary>
+	/// Draw TextureArrayData inspector.
+	/// </summary>
 	public override void OnInspectorGUI ()
 	{
 		serializedObject.Update ();

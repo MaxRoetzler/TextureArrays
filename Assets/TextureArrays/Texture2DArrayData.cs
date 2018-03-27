@@ -1,7 +1,12 @@
-﻿using UnityEngine;
+﻿/// Date	: 27/03/2018
+/// Company	: Fantastic, yes
+/// Author	: Maximilian Rötzer
+/// License	: This code is licensed under MIT license
+
+using UnityEngine;
 using UnityEditor;
 
-public class TextureArrayData : ScriptableObject
+public class Texture2DArrayData : ScriptableObject
 {
 	#region Fields
 	[SerializeField]
@@ -26,7 +31,10 @@ public class TextureArrayData : ScriptableObject
 	private Texture2DArray m_texture2DArray;
 	#endregion
 
-	public enum TextureArrayState
+	/// <summary>
+	/// The state of a texture within the array.
+	/// </summary>
+	public enum Texture2DState
 	{
 		Ok = 0,
 		Size = 1,
@@ -35,7 +43,7 @@ public class TextureArrayData : ScriptableObject
 	}
 
 	/// <summary>
-	/// Updates the texture array asset.
+	/// Updates the Texture2DArray asset.
 	/// </summary>
 	public void Rebuild ()
 	{
@@ -66,7 +74,7 @@ public class TextureArrayData : ScriptableObject
 	}
 
 	/// <summary>
-	/// Delete the array texture without losing parameters and texture references.
+	/// Delete the Texture2DArray.
 	/// </summary>
 	public void Delete ()
 	{
@@ -86,30 +94,30 @@ public class TextureArrayData : ScriptableObject
 	/// </summary>
 	/// <param name="texture">The texture to check.</param>
 	/// <returns>The TextureArrayState.</returns>
-	public TextureArrayState GetTextureState (Texture2D texture)
+	public Texture2DState GetTextureState (Texture2D texture)
 	{
 		if (texture.width != m_width || texture.height != m_height)
 		{
-			return TextureArrayState.Size;
+			return Texture2DState.Size;
 		}
 
 		if (texture.format != m_format)
 		{
-			return TextureArrayState.Format;
+			return Texture2DState.Format;
 		}
 
 		if (texture.mipmapCount != m_mipMapCount)
 		{
-			return TextureArrayState.Mipmaps;
+			return Texture2DState.Mipmaps;
 		}
 
-		return TextureArrayState.Ok;
+		return Texture2DState.Ok;
 	}
 
 	/// <summary>
-	/// Validate the texture 2D array, check if all textures match parameters.
+	/// Validate if all textures match match the Texture2DArray parameters.
 	/// </summary>
-	/// <returns>True if all textures match the settings, otherwise false.</returns>
+	/// <returns>True if all textures match the Texture2DArray parameters, otherwise false.</returns>
 	private bool Validate ()
 	{
 		foreach (Texture2D texture in m_textures)
@@ -124,7 +132,7 @@ public class TextureArrayData : ScriptableObject
 	}
 
 	/// <summary>
-	/// Initialize texture array data, copy default settings from first texture.
+	/// Initialize Texture2DArray parameters from the first texture in the array.
 	/// </summary>
 	/// <param name="textures">The texture 2D array.</param>
 	private void Initialize (Texture2D [] textures)
@@ -144,23 +152,23 @@ public class TextureArrayData : ScriptableObject
 	}
 
 	#region Create Asset Menu
-	[MenuItem ("Assets/Create/Texture Array", false, 303)]
+	[MenuItem ("Assets/Create/Texture 2D Array", false, 303)]
 	private static void TextureArrayItem ()
 	{
-		TextureArrayData textureArray = CreateInstance<TextureArrayData> ();
-		textureArray.Initialize (Selection.GetFiltered<Texture2D> (SelectionMode.TopLevel));
+		Texture2DArrayData texture2DArray = CreateInstance<Texture2DArrayData> ();
+		texture2DArray.Initialize (Selection.GetFiltered<Texture2D> (SelectionMode.TopLevel));
 
-		string assetPath = AssetDatabase.GetAssetPath (textureArray.m_textures [0]);
-		assetPath = assetPath.Remove (assetPath.LastIndexOf ('/')) + "/TextureArray.asset";
+		string assetPath = AssetDatabase.GetAssetPath (texture2DArray.m_textures [0]);
+		assetPath = assetPath.Remove (assetPath.LastIndexOf ('/')) + "/Texture2DArray.asset";
 
-		AssetDatabase.CreateAsset (textureArray, assetPath);
+		AssetDatabase.CreateAsset (texture2DArray, assetPath);
 		AssetDatabase.SaveAssets ();
 
-		Selection.activeObject = textureArray;
-		textureArray.Rebuild ();
+		Selection.activeObject = texture2DArray;
+		texture2DArray.Rebuild ();
 	}
 
-	[MenuItem ("Assets/Create/Texture Array", true)]
+	[MenuItem ("Assets/Create/Texture 2D Array", true)]
 	private static bool TextureArrayItemValidation ()
 	{
 		return Selection.GetFiltered <Texture2D> (SelectionMode.TopLevel).Length > 0;
