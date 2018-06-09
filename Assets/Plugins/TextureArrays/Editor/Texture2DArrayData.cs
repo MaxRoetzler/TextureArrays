@@ -1,6 +1,6 @@
-﻿/// Date	: 27/03/2018
+﻿/// Date	: 09/06/2018
 /// Company	: Fantastic, yes
-/// Author	: Maximilian Rötzer
+/// Author	: Maximilian Rötzler
 /// License	: This code is licensed under MIT license
 
 using UnityEngine;
@@ -36,10 +36,11 @@ public class Texture2DArrayData : ScriptableObject
 	/// </summary>
 	public enum Texture2DState
 	{
-		Ok = 0,
-		Size = 1,
-		Format = 2,
-		Mipmaps = 3,
+		Match = 0,		// Texture matches
+		Size = 1,		// Size mismatch
+		Format = 2,		// Format mismatch
+		Mipmaps = 3,	// Mipmap count mismatch
+		Missing = 4,	// Texture reference is missing
 	}
 
 	/// <summary>
@@ -49,43 +50,31 @@ public class Texture2DArrayData : ScriptableObject
 	{
 		if (Validate ())
 		{
-			Delete ();
+			if (m_texture2DArray != null)
+			{
+				DestroyImmediate (m_texture2DArray, true);
+				m_texture2DArray = null;
+			}
 
-			Texture2DArray textureArray = new Texture2DArray (m_width, m_height, m_textures.Length, m_format, true);
+			m_texture2DArray = new Texture2DArray (m_width, m_height, m_textures.Length, m_format, true);
 
 			for (int i = 0; i < m_textures.Length; i++)
 			{
 				for (int m = 0; m < m_textures [i].mipmapCount; m++)
 				{
-					Graphics.CopyTexture (m_textures [i], 0, m, textureArray, i, m);
+					Graphics.CopyTexture (m_textures [i], 0, m, m_texture2DArray, i, m);
 				}
 			}
 
-			textureArray.name = name;
-			textureArray.anisoLevel = m_aniso;
-			textureArray.wrapModeU = m_wrapModeU;
-			textureArray.wrapModeV = m_wrapModeV;
+			m_texture2DArray.name = name;
+			m_texture2DArray.anisoLevel = m_aniso;
+			m_texture2DArray.wrapModeU = m_wrapModeU;
+			m_texture2DArray.wrapModeV = m_wrapModeV;
 
-			textureArray.Apply (false, true);
+			m_texture2DArray.Apply (false, true);
 
-			AssetDatabase.AddObjectToAsset (textureArray, this);
+			AssetDatabase.AddObjectToAsset (m_texture2DArray, this);
 			AssetDatabase.SaveAssets ();
-		}
-	}
-
-	/// <summary>
-	/// Delete the Texture2DArray.
-	/// </summary>
-	public void Delete ()
-	{
-		Object [] objects = AssetDatabase.LoadAllAssetsAtPath (AssetDatabase.GetAssetPath (this));
-
-		foreach (Object obj in objects)
-		{
-			if (obj.GetType () == typeof (Texture2DArray))
-			{
-				DestroyImmediate (obj, true);
-			}
 		}
 	}
 
@@ -96,6 +85,11 @@ public class Texture2DArrayData : ScriptableObject
 	/// <returns>The TextureArrayState.</returns>
 	public Texture2DState GetTextureState (Texture2D texture)
 	{
+		if (texture == null)
+		{
+			return Texture2DState.Missing;
+		}
+
 		if (texture.width != m_width || texture.height != m_height)
 		{
 			return Texture2DState.Size;
@@ -111,18 +105,20 @@ public class Texture2DArrayData : ScriptableObject
 			return Texture2DState.Mipmaps;
 		}
 
-		return Texture2DState.Ok;
+		return Texture2DState.Match;
 	}
 
 	/// <summary>
 	/// Validate if all textures match match the Texture2DArray parameters.
 	/// </summary>
 	/// <returns>True if all textures match the Texture2DArray parameters, otherwise false.</returns>
-	private bool Validate ()
+	public bool Validate ()
 	{
+		ApplySettingsFromTexture (m_textures [0]);
+
 		foreach (Texture2D texture in m_textures)
 		{
-			if (texture.width != m_width || texture.height != m_height || texture.format != m_format || texture.mipmapCount != m_mipMapCount)
+			if (texture == null || texture.width != m_width || texture.height != m_height || texture.format != m_format || texture.mipmapCount != m_mipMapCount)
 			{
 				return false;
 			}
@@ -131,24 +127,30 @@ public class Texture2DArrayData : ScriptableObject
 		return true;
 	}
 
+	private void ApplySettingsFromTexture (Texture2D template)
+	{
+		if (template != null && m_isAutomatic)
+		{
+			m_width = template.width;
+			m_height = template.height;
+			m_format = template.format;
+			m_aniso = template.anisoLevel;
+			m_wrapModeU = template.wrapModeU;
+			m_wrapModeV = template.wrapModeV;
+			m_mipMapCount = template.mipmapCount;
+		}
+	}
+
 	/// <summary>
-	/// Initialize Texture2DArray parameters from the first texture in the array.
+	/// Initialize Texture2DArray using supplied texture array.
 	/// </summary>
-	/// <param name="textures">The texture 2D array.</param>
+	/// <param name="textures">Array of Texture2Ds.</param>
 	private void Initialize (Texture2D [] textures)
 	{
-		Texture2D template = textures [0];
-
 		m_isAutomatic = true;
-		m_width = template.width;
-		m_height = template.height;
-		m_format = template.format;
-		m_aniso = template.anisoLevel;
-		m_wrapModeU = template.wrapModeU;
-		m_wrapModeV = template.wrapModeV;
-		m_mipMapCount = template.mipmapCount;
-
 		m_textures = textures;
+
+		ApplySettingsFromTexture (textures [0]);
 	}
 
 	#region Create Asset Menu

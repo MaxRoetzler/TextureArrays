@@ -1,6 +1,6 @@
-﻿/// Date	: 27/03/2018
+﻿/// Date	: 09/06/2018
 /// Company	: Fantastic, yes
-/// Author	: Maximilian Rötzer
+/// Author	: Maximilian Rötzler
 /// License	: This code is licensed under MIT license
 
 using UnityEditorInternal;
@@ -15,12 +15,13 @@ public class Texture2DArrayEditor : Editor
 	private ReorderableList m_list;
 	private Texture2DArrayData m_arrayData;
 
-	private readonly GUIContent [] m_texture2DState = new GUIContent [4]
+	private readonly GUIContent [] m_texture2DState = new GUIContent [5]
 	{
 		new GUIContent ("✓", "Ok"),
 		new GUIContent ("✘", "Texture size does not match!"),
 		new GUIContent ("✘", "Texture format is wrong!"),
-		new GUIContent ("✘", "Mip map count is wrong!"),
+		new GUIContent ("✘", "Mip map count missmatch!"),
+		new GUIContent ("✘", "Texture reference is missing!"),
 	};
 	#endregion
 
@@ -42,13 +43,14 @@ public class Texture2DArrayEditor : Editor
 			drawElementCallback = (Rect rect, int index, bool isActive, bool hasFocus) =>
 			{
 				SerializedProperty property = m_list.serializedProperty.GetArrayElementAtIndex (index);
-				Texture2D texture = (Texture2D) property.objectReferenceValue;
+				Texture2D texture = property.objectReferenceValue as Texture2D;
 
+				GUIContent label = new GUIContent (texture == null ? "None" : texture.name);
 				int state = (int) m_arrayData.GetTextureState (texture);
 
 				EditorGUI.BeginChangeCheck ();
 				EditorGUI.PropertyField (new Rect (rect.x, rect.y + 2, 36, 16), property, GUIContent.none);
-				EditorGUI.LabelField (new Rect (rect.x + 40, rect.y + 2, rect.width - 60, 16), new GUIContent (texture.name));
+				EditorGUI.LabelField (new Rect (rect.x + 40, rect.y + 2, rect.width - 60, 16), label);
 				EditorGUI.LabelField (new Rect (rect.width, rect.y + 2, 20, 16), m_texture2DState [state]);
 
 				if (EditorGUI.EndChangeCheck ())
@@ -82,12 +84,13 @@ public class Texture2DArrayEditor : Editor
 	/// </summary>
 	public override void OnInspectorGUI ()
 	{
+		m_arrayData.Validate ();
 		serializedObject.Update ();
 
-		SerializedProperty autoSettings = serializedObject.FindProperty ("m_isAutomatic");
-		EditorGUILayout.PropertyField (autoSettings, new GUIContent ("Automatic"));
+		SerializedProperty isAutomatic = serializedObject.FindProperty ("m_isAutomatic");
+		EditorGUILayout.PropertyField (isAutomatic, new GUIContent ("Automatic"));
 
-		GUI.enabled = !autoSettings.boolValue;
+		GUI.enabled = !isAutomatic.boolValue;
 
 		EditorGUI.BeginChangeCheck ();
 		EditorGUILayout.PropertyField (serializedObject.FindProperty ("m_width"));
