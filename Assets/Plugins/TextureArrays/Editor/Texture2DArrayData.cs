@@ -1,4 +1,4 @@
-﻿/// Date	: 09/06/2018
+/// Date	: 12/06/2018
 /// Company	: Fantastic, yes
 /// Author	: Maximilian Rötzler
 /// License	: This code is licensed under MIT license
@@ -50,30 +50,32 @@ public class Texture2DArrayData : ScriptableObject
 	{
 		if (Validate ())
 		{
-			if (m_texture2DArray != null)
-			{
-				DestroyImmediate (m_texture2DArray, true);
-				m_texture2DArray = null;
-			}
-
-			m_texture2DArray = new Texture2DArray (m_width, m_height, m_textures.Length, m_format, true);
+			Texture2DArray texture2DArray = new Texture2DArray (m_width, m_height, m_textures.Length, m_format, true);
 
 			for (int i = 0; i < m_textures.Length; i++)
 			{
 				for (int m = 0; m < m_textures [i].mipmapCount; m++)
 				{
-					Graphics.CopyTexture (m_textures [i], 0, m, m_texture2DArray, i, m);
+					Graphics.CopyTexture (m_textures [i], 0, m, texture2DArray, i, m);
 				}
 			}
 
-			m_texture2DArray.name = name;
-			m_texture2DArray.anisoLevel = m_aniso;
-			m_texture2DArray.wrapModeU = m_wrapModeU;
-			m_texture2DArray.wrapModeV = m_wrapModeV;
+			texture2DArray.name = name;
+			texture2DArray.anisoLevel = m_aniso;
+			texture2DArray.wrapModeU = m_wrapModeU;
+			texture2DArray.wrapModeV = m_wrapModeV;
+			texture2DArray.Apply (false, true);
 
-			m_texture2DArray.Apply (false, true);
-
-			AssetDatabase.AddObjectToAsset (m_texture2DArray, this);
+			if (m_texture2DArray == null)
+			{
+				m_texture2DArray = texture2DArray;
+				AssetDatabase.AddObjectToAsset (m_texture2DArray, this);
+			}
+			else
+			{
+				EditorUtility.CopySerialized (texture2DArray, m_texture2DArray);
+			}
+			
 			AssetDatabase.SaveAssets ();
 		}
 	}
